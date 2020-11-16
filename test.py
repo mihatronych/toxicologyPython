@@ -5,7 +5,12 @@ from string import punctuation
 from nltk.corpus import stopwords
 import nltk
 import random
+from nltk.classify.scikitlearn import SklearnClassifier
+from sklearn.linear_model import LogisticRegression,SGDClassifier
+from sklearn.svm import SVC, LinearSVC, NuSVC
+from sklearn.naive_bayes import MultinomialNB,BernoulliNB
 import pickle
+import zipfile
 
 class PreProcessSome:
     def __init__(self):
@@ -43,7 +48,7 @@ def extract_features(message, wf):
         features['contains(%s)' % word] = (word in message_words)
     return features
 
-def pretrain():
+def pretrainNB():
     path = 'input/'
     train_data_file = f'{path}train.csv'
     trainx = pd.read_csv(train_data_file)
@@ -66,7 +71,33 @@ def pretrain():
     f.close()
     print("Accuracy:", acc)
 
-def classify_with_modelling(message):
+def pretrainSVC():
+    path = 'input/'
+    train_data_file = f'{path}train.csv'
+    trainx = pd.read_csv(train_data_file)
+    train = trainx.values[:2000]
+    ppr = PreProcessSome()
+    ppr = ppr.processText(train)
+    wf = buildVocabulary(ppr)
+    tutu = []
+    for i in ppr:
+        tutu.append((extract_features(i[1], wf), "toxic" if i[2] == 1 else "untoxic"))
+    random.shuffle(tutu)
+    train_x = tutu[:1800]
+    SVC_classifier = SklearnClassifier(SVC(kernel='linear',probability=True))
+    SVC_classifier.train(train_x)
+    test_x = tutu[1800:]
+    acc = nltk.classify.accuracy(SVC_classifier, test_x)
+    path = "output/"
+    f = open(f'{path}my_svc_classifier.pickle', 'wb')
+    pickle.dump(SVC_classifier, f)
+    f.close()
+    with zipfile.ZipFile(f'{path}svc.zip', mode='w',compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.write(f'{path}my_svc_classifier.pickle', arcname="my_svc_classifier.pickle")
+    os.remove(f'{path}my_svc_classifier.pickle')
+    print("Accuracy:", acc)
+
+def classify_with_modelling_NB(message):
     path = 'input/'
     train_data_file = f'{path}train.csv'
     trainx = pd.read_csv(train_data_file)
@@ -85,11 +116,33 @@ def classify_with_modelling(message):
     for i in range(5):
         r_prob += model.prob_classify(t_features).prob("toxic")
     r_prob /= 5
-    return str("MESSAGE\r\n"+message + " : " +"\n\rRESULT is\n\r "
+    return str("MESSAGE\r\n"+message + " : " +"\n\rNB classification RESULT is\n\r "
                        + str(r_prob) + " Toxic\n\r " +
                        str(1 - r_prob) + " Untoxic\n\r")
 
-def classify_many_with_modelling(messages):
+def classify_with_modelling_SVC(message):
+    path = 'input/'
+    train_data_file = f'{path}train.csv'
+    trainx = pd.read_csv(train_data_file)
+    train = trainx.values[:3000]
+    ppr = PreProcessSome()
+    ppr_vocab = ppr.processText(train)
+    ppr_message = ppr.processDoc(message)
+    wf = buildVocabulary(ppr_vocab)
+    path = "output/"
+    archive = zipfile.ZipFile(f'{path}svc.zip', 'r')
+    f = archive.open("my_svc_classifier.pickle")
+    model = pickle.load(f)
+    t_features = extract_features(ppr_message, wf)
+    r_prob = 0.0
+    for i in range(5):
+        r_prob += model.prob_classify(t_features).prob("toxic")
+    r_prob /= 5
+    return str("MESSAGE\r\n"+message + " : " +"\n\rSVC classification RESULT is\n\r "
+                       + str(r_prob) + " Toxic\n\r " +
+                       str(1 - r_prob) + " Untoxic\n\r")
+
+def classify_many_with_modelling_NB(messages):
     path = 'input/'
     train_data_file = f'{path}train.csv'
     trainx = pd.read_csv(train_data_file)
@@ -112,7 +165,35 @@ def classify_many_with_modelling(messages):
             r_prob += model.prob_classify(t_features).prob("toxic")
         r_prob /= 5
 
-        result.append(("MESSAGE\r\n"+messages[k] + " : " +"\n\rRESULT is\n\r "
+        result.append(("MESSAGE\r\n"+messages[k] + " : " +"\n\rNB classification RESULT is\n\r "
+                       + str(r_prob) + " Toxic\n\r " +
+                       str(1 - r_prob) + " Untoxic\n\r"))
+    return result
+
+def classify_many_with_modelling_SVC(messages):
+    path = 'input/'
+    train_data_file = f'{path}train.csv'
+    trainx = pd.read_csv(train_data_file)
+    train = trainx.values[:3000]
+    ppr = PreProcessSome()
+    ppred = ppr.processText(train)
+    ppr_messages = []
+    for message in messages:
+        ppr_messages.append(ppr.processDoc(message))
+    wf = buildVocabulary(ppred)
+    path = "output/"
+    archive = zipfile.ZipFile(f'{path}svc.zip', 'r')
+    f = archive.open("my_svc_classifier.pickle")
+    model = pickle.load(f)
+    result = []
+    for k in range(len(messages)):
+        t_features = extract_features(ppr_messages[k], wf)
+        r_prob = 0.0
+        for i in range(5):
+            r_prob += model.prob_classify(t_features).prob("toxic")
+        r_prob /= 5
+
+        result.append(("MESSAGE\r\n"+messages[k] + " : " +"\n\rSVC classification RESULT is\n\r "
                        + str(r_prob) + " Toxic\n\r " +
                        str(1 - r_prob) + " Untoxic\n\r"))
     return result
@@ -125,12 +206,15 @@ if __name__ == '__main__':
 
     train_data_file = f'{path}train.csv'
     trainx = pd.read_csv(train_data_file)
-    #pretrain()
+    #pretrainNB()
+    #pretrainSVC()
     test = trainx.values[3150:3200]
     messages = []
     for message in test:
         messages.append(message[1])
-    [print(i) for i in classify_many_with_modelling(messages)]
+    #[print(i) for i in classify_many_with_modelling_NB(messages)]
+    #[print(i) for i in classify_many_with_modelling_SVC(messages)]
     #print(messages[0])
-    #print(classify_with_modelling(messages[0]))
+    print(classify_with_modelling_NB(messages[0]))
+    print(classify_with_modelling_SVC(messages[0]))
 
