@@ -47,7 +47,7 @@ def pretrain():
     path = 'input/'
     train_data_file = f'{path}train.csv'
     trainx = pd.read_csv(train_data_file)
-    train = trainx.values[:2500]
+    train = trainx.values[:3000]
     ppr = PreProcessSome()
     ppr = ppr.processText(train)
     wf = buildVocabulary(ppr)
@@ -55,11 +55,12 @@ def pretrain():
     for i in ppr:
         tutu.append((extract_features(i[1], wf), "toxic" if i[2] == 1 else "untoxic"))
     random.shuffle(tutu)
-    train_x = tutu[:2250]
+    train_x = tutu[:2700]
     model = nltk.NaiveBayesClassifier.train(train_x)
-    test_x = tutu[2250:]
+    test_x = tutu[2700:]
     model.show_most_informative_features(20)
     acc = nltk.classify.accuracy(model, test_x)
+    path = "output/"
     f = open(f'{path}my_classifier.pickle', 'wb')
     pickle.dump(model, f)
     f.close()
@@ -69,11 +70,12 @@ def classify_with_modelling(message):
     path = 'input/'
     train_data_file = f'{path}train.csv'
     trainx = pd.read_csv(train_data_file)
-    train = trainx.values[:2000]
+    train = trainx.values[:3000]
     ppr = PreProcessSome()
     ppr_vocab = ppr.processText(train)
     ppr_message = ppr.processDoc(message)
     wf = buildVocabulary(ppr_vocab)
+    path = "output/"
     f = open(f'{path}my_classifier.pickle', 'rb')
     model = pickle.load(f)
     f.close()
@@ -91,13 +93,14 @@ def classify_many_with_modelling(messages):
     path = 'input/'
     train_data_file = f'{path}train.csv'
     trainx = pd.read_csv(train_data_file)
-    train = trainx.values[:2000]
+    train = trainx.values[:3000]
     ppr = PreProcessSome()
     ppred = ppr.processText(train)
     ppr_messages = []
     for message in messages:
         ppr_messages.append(ppr.processDoc(message))
     wf = buildVocabulary(ppred)
+    path = "output/"
     f = open(f'{path}my_classifier.pickle', 'rb')
     model = pickle.load(f)
     f.close()
@@ -123,7 +126,7 @@ if __name__ == '__main__':
     train_data_file = f'{path}train.csv'
     trainx = pd.read_csv(train_data_file)
     #pretrain()
-    test = trainx.values[2150:2200]
+    test = trainx.values[3150:3200]
     messages = []
     for message in test:
         messages.append(message[1])
