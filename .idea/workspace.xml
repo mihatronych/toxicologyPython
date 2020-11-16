@@ -25,8 +25,9 @@
   </component>
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
   </component>
-  <component name="RunManager" selected="Python.forVK">
+  <component name="RunManager" selected="Python.test">
     <configuration name="forVK" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="toxicologyPython" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -71,8 +72,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.forVK" />
         <item itemvalue="Python.test" />
+        <item itemvalue="Python.forVK" />
       </list>
     </recent_temporary>
   </component>
@@ -88,21 +89,56 @@
     <servers />
   </component>
   <component name="WindowStateProjectService">
-    <state width="1515" height="210" key="GridCell.Tab.0.bottom" timestamp="1604924905582">
+    <state x="502" y="214" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1605524340298">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1515" height="210" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1604924905582" />
-    <state width="1515" height="210" key="GridCell.Tab.0.center" timestamp="1604924905582">
+    <state x="502" y="214" key="#com.intellij.fileTypes.FileTypeChooser/0.0.1536.824@0.0.1536.824" timestamp="1605524340298" />
+    <state x="549" y="167" key="FileChooserDialogImpl" timestamp="1604984651447">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1515" height="210" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1604924905582" />
-    <state width="1515" height="210" key="GridCell.Tab.0.left" timestamp="1604924905582">
+    <state x="549" y="167" key="FileChooserDialogImpl/0.0.1536.824@0.0.1536.824" timestamp="1604984651447" />
+    <state width="1515" height="210" key="GridCell.Tab.0.bottom" timestamp="1605526647196">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1515" height="210" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1604924905582" />
-    <state width="1515" height="210" key="GridCell.Tab.0.right" timestamp="1604924905582">
+    <state width="1515" height="210" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1605526647196" />
+    <state width="1515" height="210" key="GridCell.Tab.0.center" timestamp="1605526647196">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1515" height="210" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1604924905582" />
+    <state width="1515" height="210" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1605526647196" />
+    <state width="1515" height="210" key="GridCell.Tab.0.left" timestamp="1605526647196">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1515" height="210" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1605526647196" />
+    <state width="1515" height="210" key="GridCell.Tab.0.right" timestamp="1605526647196">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1515" height="210" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1605526647196" />
+    <state width="1515" height="261" key="GridCell.Tab.1.bottom" timestamp="1605526354300">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1515" height="261" key="GridCell.Tab.1.bottom/0.0.1536.824@0.0.1536.824" timestamp="1605526354300" />
+    <state width="1515" height="261" key="GridCell.Tab.1.center" timestamp="1605526354300">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1515" height="261" key="GridCell.Tab.1.center/0.0.1536.824@0.0.1536.824" timestamp="1605526354300" />
+    <state width="1515" height="261" key="GridCell.Tab.1.left" timestamp="1605526354300">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1515" height="261" key="GridCell.Tab.1.left/0.0.1536.824@0.0.1536.824" timestamp="1605526354300" />
+    <state width="1515" height="261" key="GridCell.Tab.1.right" timestamp="1605526354300">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1515" height="261" key="GridCell.Tab.1.right/0.0.1536.824@0.0.1536.824" timestamp="1605526354300" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/test.py</url>
+          <line>81</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

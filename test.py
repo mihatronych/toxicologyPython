@@ -5,7 +5,7 @@ from string import punctuation
 from nltk.corpus import stopwords
 import nltk
 import random
-import math
+import pickle
 
 class PreProcessSome:
     def __init__(self):
@@ -43,59 +43,75 @@ def extract_features(message, wf):
         features['contains(%s)' % word] = (word in message_words)
     return features
 
-def classify_with_modelling(message):
+def pretrain():
     path = 'input/'
     train_data_file = f'{path}train.csv'
     trainx = pd.read_csv(train_data_file)
-    train = trainx.values[:1000]
+    train = trainx.values[:2500]
     ppr = PreProcessSome()
     ppr = ppr.processText(train)
-    ppr_message = ppr.processDoc(message)
     wf = buildVocabulary(ppr)
     tutu = []
     for i in ppr:
         tutu.append((extract_features(i[1], wf), "toxic" if i[2] == 1 else "untoxic"))
     random.shuffle(tutu)
-    train_x = tutu[:900]
+    train_x = tutu[:2250]
     model = nltk.NaiveBayesClassifier.train(train_x)
-    test_x = tutu[900:]
+    test_x = tutu[2250:]
     model.show_most_informative_features(20)
     acc = nltk.classify.accuracy(model, test_x)
+    f = open(f'{path}my_classifier.pickle', 'wb')
+    pickle.dump(model, f)
+    f.close()
     print("Accuracy:", acc)
+
+def classify_with_modelling(message):
+    path = 'input/'
+    train_data_file = f'{path}train.csv'
+    trainx = pd.read_csv(train_data_file)
+    train = trainx.values[:2000]
+    ppr = PreProcessSome()
+    ppr_vocab = ppr.processText(train)
+    ppr_message = ppr.processDoc(message)
+    wf = buildVocabulary(ppr_vocab)
+    f = open(f'{path}my_classifier.pickle', 'rb')
+    model = pickle.load(f)
+    f.close()
+    model.show_most_informative_features(20)
     t_features = extract_features(ppr_message, wf)
-    r_classification = model.prob_classify(t_features)
-    return str("MESSAGE\r\n"+message + " : " +"\n\rRESULT is "
-                       + str(round((r_classification.prob("toxic")*100),4)) + "% Toxic -" +
-                       str(round((r_classification.prob("untoxic")*100),4)) + "% Untoxic\n\r")
+    r_prob = 0.0
+    for i in range(5):
+        r_prob += model.prob_classify(t_features).prob("toxic")
+    r_prob /= 5
+    return str("MESSAGE\r\n"+message + " : " +"\n\rRESULT is\n\r "
+                       + str(r_prob) + " Toxic\n\r " +
+                       str(1 - r_prob) + " Untoxic\n\r")
 
 def classify_many_with_modelling(messages):
     path = 'input/'
     train_data_file = f'{path}train.csv'
     trainx = pd.read_csv(train_data_file)
-    train = trainx.values[:1000]
+    train = trainx.values[:2000]
     ppr = PreProcessSome()
     ppred = ppr.processText(train)
     ppr_messages = []
     for message in messages:
         ppr_messages.append(ppr.processDoc(message))
     wf = buildVocabulary(ppred)
-    tutu = []
-    for i in ppred:
-        tutu.append((extract_features(i[1], wf), "toxic" if i[2] == 1 else "untoxic"))
-    random.shuffle(tutu)
-    train_x = tutu[:900]
-    model = nltk.NaiveBayesClassifier.train(train_x)
-    test_x = tutu[900:]
-    model.show_most_informative_features(20)
-    acc = nltk.classify.accuracy(model, test_x)
-    print("Accuracy:", acc)
+    f = open(f'{path}my_classifier.pickle', 'rb')
+    model = pickle.load(f)
+    f.close()
     result = []
     for k in range(len(messages)):
         t_features = extract_features(ppr_messages[k], wf)
-        r_classification = model.prob_classify(t_features)
-        result.append(("MESSAGE\r\n"+messages[k] + " : " +"\n\rRESULT is "
-                       + str(round((r_classification.prob("toxic")*100),4)) + "% Toxic - " +
-                       str(round((r_classification.prob("untoxic")*100),4)) + "% Untoxic\n\r"))
+        r_prob = 0.0
+        for i in range(5):
+            r_prob += model.prob_classify(t_features).prob("toxic")
+        r_prob /= 5
+
+        result.append(("MESSAGE\r\n"+messages[k] + " : " +"\n\rRESULT is\n\r "
+                       + str(r_prob) + " Toxic\n\r " +
+                       str(1 - r_prob) + " Untoxic\n\r"))
     return result
 
 if __name__ == '__main__':
@@ -106,10 +122,12 @@ if __name__ == '__main__':
 
     train_data_file = f'{path}train.csv'
     trainx = pd.read_csv(train_data_file)
-    train = trainx.values[:1000]
-    test = trainx.values[250:300]
+    #pretrain()
+    test = trainx.values[2150:2200]
     messages = []
     for message in test:
         messages.append(message[1])
     [print(i) for i in classify_many_with_modelling(messages)]
+    #print(messages[0])
+    #print(classify_with_modelling(messages[0]))
 
