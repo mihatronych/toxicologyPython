@@ -7,7 +7,7 @@ import vk
 # kpopanti
 # antidolboebi
 # ------------------------------
-access_token = 'ea51924dea51924dea51924decea2505dceea51ea51924db5c7ef7faa5701ef69eb57f0'
+access_token = ''
 
 def get_group_comments(group_id):
     while True:
