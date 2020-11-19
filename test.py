@@ -193,9 +193,9 @@ def classify_many_with_modelling_SVC(messages):
             r_prob += model.prob_classify(t_features).prob("toxic")
         r_prob /= 5
 
-        result.append(("MESSAGE\r\n"+messages[k] + " : " +"\n\rSVC classification RESULT is\n\r "
+        result.append(("MESSAGE\r\n"+messages[k] + " : " +"\n\rSVC classification RESULT is\n\r ")
                        + str(r_prob) + " Toxic\n\r " +
-                       str(1 - r_prob) + " Untoxic\n\r"))
+                       str(1 - r_prob) + " Untoxic\n\r")
     return result
 
 if __name__ == '__main__':
@@ -212,9 +212,9 @@ if __name__ == '__main__':
     messages = []
     for message in test:
         messages.append(message[1])
-    #[print(i) for i in classify_many_with_modelling_NB(messages)]
-    #[print(i) for i in classify_many_with_modelling_SVC(messages)]
+    [print(i) for i in classify_many_with_modelling_NB(messages)]
+    [print(i) for i in classify_many_with_modelling_SVC(messages)]
     #print(messages[0])
-    print(classify_with_modelling_NB(messages[0]))
-    print(classify_with_modelling_SVC(messages[0]))
+    #print(classify_with_modelling_NB(messages[0]))
+    #print(classify_with_modelling_SVC(messages[0]))
 
