@@ -82,10 +82,10 @@ def get_groups_members(group_id, access_token, count=1000):
         return e.message
 
 if __name__ == '__main__':
-    access_token = 'ea51924dea51924dea51924decea2505dceea51ea51924db5c7ef7faa5701ef69eb57f0'
+    access_token = ''
     # print(get_user(1, access_token))
     # print(get_posts(1, 20, access_token))
-    print(get_posts_by_domain("degradination", 20, access_token))
+    # print(get_posts_by_domain("degradination", 20, access_token))
     # print(get_posts_comment(1, 2442097, access_token, 20))
     # print(get_comment_comments(1, 2442097, 2442108, access_token, 20))
     # print(get_users_followers(1, access_token, 100))
