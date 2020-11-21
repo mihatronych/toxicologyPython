@@ -13,7 +13,6 @@
 <a href="https://vk.com/ismaakova"><img src="https://img.shields.io/badge/ismakova-vk-blue" alt="ismakova"></a>
 </p>
 
-
 ## О проекте
 
 Приложение для определения токсичности (NLP) твита/сообщения
