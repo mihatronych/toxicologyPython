@@ -198,6 +198,29 @@ def classify_many_with_modelling_SVC(messages):
                        str(1 - r_prob) + " Untoxic\n\r")
     return result
 
+def csv_reader(file_obj):
+    """
+    Read a csv file
+    """
+    reader = csv.reader(file_obj)
+    data = []
+    for row in reader:
+        row = str(" ".join(row))
+        row = row.replace("#", "hashtag")
+        if row!="":
+            data.append(row + "#" + "0")
+    return data
+
+def csv_dict_writer(path, fieldnames, data):
+    """
+    Writes a CSV file using DictWriter
+    """
+    with open(path, "w", newline='', encoding="utf-8") as out_file:
+        writer = csv.DictWriter(out_file, delimiter=';', fieldnames=fieldnames)
+        writer.writeheader()
+        for row in data:
+            writer.writerow(row)
+
 if __name__ == '__main__':
     #session = vk.Session()
     #vk_api = vk.API(session, v="5.92")
@@ -210,11 +233,27 @@ if __name__ == '__main__':
     #pretrainSVC()
     test = trainx.values[3150:3200]
     messages = []
-    for message in test:
-        messages.append(message[1])
-    [print(i) for i in classify_many_with_modelling_NB(messages)]
-    [print(i) for i in classify_many_with_modelling_SVC(messages)]
+    #for message in test:
+    #    messages.append(message[1])
+    #[print(i) for i in classify_many_with_modelling_NB(messages)]
+    #[print(i) for i in classify_many_with_modelling_SVC(messages)]
     #print(messages[0])
     #print(classify_with_modelling_NB(messages[0]))
     #print(classify_with_modelling_SVC(messages[0]))
+
+    csv_path = "vk_parser/vk_comments.csv"
+    data = []
+    with open(csv_path, "r", encoding='utf-8') as f_obj:
+        data = csv_reader(f_obj)
+        data[0] = "comment#toxic"
+        data = [el.split("#") for el in data]
+
+    my_list = []
+    fieldnames = data[0]
+    for values in data[1:]:
+        inner_dict = dict(zip(fieldnames, values))
+        my_list.append(inner_dict)
+
+    path = "vk_parser/vk_comments_DS.csv"
+    csv_dict_writer(path, fieldnames, my_list)
 
