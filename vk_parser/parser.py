@@ -18,7 +18,7 @@ def get_group_comments(domain):
     com_texts = []
     for i in range(len(post_id_list['items'])):
         post_id = str(post_id_list['items'][i]['id'])
-        comments = vk_methods.get_posts_comment(group_id, post_id, access_token, 100)
+        comments = vk_methods.get_posts(group_id, post_id, access_token, 100)
         for j in range(len(comments['items'])):
             if 'text' in comments['items'][j]:
                 com_texts.append(re.sub('^\s+|\n|\r|\s+$', '', comments['items'][j]['text']))
