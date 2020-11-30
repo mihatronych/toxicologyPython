@@ -6,9 +6,9 @@ from nltk.corpus import stopwords
 import nltk
 import random
 from nltk.classify.scikitlearn import SklearnClassifier
-from sklearn.linear_model import LogisticRegression,SGDClassifier
+from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.svm import SVC, LinearSVC, NuSVC
-from sklearn.naive_bayes import MultinomialNB,BernoulliNB
+from sklearn.naive_bayes import MultinomialNB, BernoulliNB
 import pickle
 import zipfile
 
