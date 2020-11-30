@@ -1,6 +1,5 @@
 .idea
 .idea/toxicologyPython.iml
 .idea/workspace.xml
+*.xml
 /.idea/
-
-
