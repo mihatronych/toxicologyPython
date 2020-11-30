@@ -82,6 +82,7 @@ def pretrainSVC():
     tutu = []
     for i in ppr:
         tutu.append((extract_features(i[1], wf), "toxic" if i[2] == 1 else "untoxic"))
+    print(tutu)
     random.shuffle(tutu)
     train_x = tutu[:1800]
     SVC_classifier = SklearnClassifier(SVC(kernel='linear',probability=True))
