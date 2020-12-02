@@ -1,7 +1,7 @@
 import vk
 import vk.exceptions
 
-access_token = "ea51924dea51924dea51924decea2505dceea51ea51924db5c7ef7faa5701ef69eb57f0"
+access_token = ""
 
 
 def get_user(user_id, access_token=access_token):
