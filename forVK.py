@@ -1,7 +1,10 @@
 import vk
 import vk.exceptions
 
-def get_user(user_id, access_token):
+access_token = ""
+
+
+def get_user(user_id, access_token=access_token):
     try:
         session = vk.Session(access_token=access_token)
         vk_api = vk.API(session, v="5.126")
@@ -10,7 +13,7 @@ def get_user(user_id, access_token):
         return e.message
 
 
-def get_posts(id, count, access_token):
+def get_posts(id, count, access_token=access_token):
     try:
         session = vk.Session(access_token=access_token)
         vk_api = vk.API(session, v="5.126")
@@ -22,7 +25,7 @@ def get_posts(id, count, access_token):
         return e.message
 
 
-def get_posts_comment(id, post_id, access_token, count=10):
+def get_posts_comment(id, post_id, access_token=access_token, count=10):
     try:
         session = vk.Session(access_token=access_token)
         vk_api = vk.API(session, v="5.126")
@@ -35,7 +38,7 @@ def get_posts_comment(id, post_id, access_token, count=10):
         return e.message
 
 
-def get_comment_comments(id, post_id, comment_id, access_token, count=10):
+def get_comment_comments(id, post_id, comment_id, access_token=access_token, count=10):
     try:
         session = vk.Session(access_token=access_token)
         vk_api = vk.API(session, v="5.126")
@@ -49,7 +52,7 @@ def get_comment_comments(id, post_id, comment_id, access_token, count=10):
         return e.message
 
 
-def get_users_followers(user_id, access_token, count=100):
+def get_users_followers(user_id, access_token=access_token, count=100):
     try:
         session = vk.Session(access_token=access_token)
         vk_api = vk.API(session, v="5.126")
@@ -62,7 +65,7 @@ def get_users_followers(user_id, access_token, count=100):
         return e.message
 
 
-def get_users_subscriptions(user_id, access_token, count=100):
+def get_users_subscriptions(user_id, access_token=access_token, count=100):
     try:
         session = vk.Session(access_token=access_token)
         vk_api = vk.API(session, v="5.126")
@@ -75,7 +78,7 @@ def get_users_subscriptions(user_id, access_token, count=100):
         return e.message
 
 
-def get_group(group_id, access_token):
+def get_group(group_id, access_token=access_token):
     try:
         session = vk.Session(access_token=access_token)
         vk_api = vk.API(session, v="5.126")
@@ -84,7 +87,7 @@ def get_group(group_id, access_token):
         return e.message
 
 
-def get_groups_members(group_id, access_token, count=1000):
+def get_groups_members(group_id, access_token=access_token, count=1000):
     try:
         session = vk.Session(access_token=access_token)
         vk_api = vk.API(session, v="5.126")
@@ -97,7 +100,7 @@ def get_groups_members(group_id, access_token, count=1000):
         return e.message
 
 if __name__ == '__main__':
-    access_token = 'ea51924dea51924dea51924decea2505dceea51ea51924db5c7ef7faa5701ef69eb57f0'
+    access_token = ''
     # (get_user('1', access_token))
     # print(get_posts("ismaakova", 20, access_token))
     # print(get_posts_comment("ismaakova", 411, access_token, 20))
@@ -105,5 +108,5 @@ if __name__ == '__main__':
     # print(get_users_followers("ismaakova", access_token, 100))
     # print(get_users_subscriptions(1, access_token, 100))
     # print(get_group(1, access_token))
-    print(get_groups_members('thecode.media', access_token, 100))
+    # print(get_groups_members('thecode.media', access_token, 100))
 
