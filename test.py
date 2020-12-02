@@ -31,6 +31,7 @@ class PreProcessSome:
         doc = word_tokenize(doc)  # remove repeated characters (helloooooooo into hello)
         return [word for word in doc if word not in self._stopwords]
 
+
 class PreProcessSomeRusnya:
     def __init__(self):
         self._stopwords = set(stopwords.words('russian') + list(punctuation) + list('``'))
@@ -43,6 +44,14 @@ class PreProcessSomeRusnya:
             id += 1
         return processedDocs
 
+    def processTextOnBigram(self, list_of_docs):
+        processedDocs = []
+        id = 0
+        for doc in list_of_docs:
+            processedDocs.append([id, self.bigramProcessDoc(doc[0]), doc[1]])
+            id += 1
+        return processedDocs
+
     def processDoc(self, doc):
         stemmer = SnowballStemmer("russian")
         doc = doc.lower()  # convert text to lower-case
@@ -51,6 +60,16 @@ class PreProcessSomeRusnya:
         doc = re.sub(r'#([^\s]+)', r'\1', doc)  # remove the # in #hashtag
         doc = word_tokenize(doc)  # remove repeated characters (helloooooooo into hello)
         return [stemmer.stem(word) for word in doc if word not in self._stopwords]
+
+    def bigramProcessDoc(self, doc):
+        stemmer = SnowballStemmer("russian")
+        doc = doc.lower()  # convert text to lower-case
+        doc = re.sub('((www\.[^\s]+)|(https?://[^\s]+))', 'URL', doc)  # remove URLs
+        doc = re.sub('@[^\s]+', 'AT_USER', doc)  # remove usernames
+        doc = re.sub(r'#([^\s]+)', r'\1', doc)  # remove the # in #hashtag
+        doc = word_tokenize(doc)  # remove repeated characters (helloooooooo into hello)
+        return [stemmer.stem(doc[i]) + " " + stemmer.stem(doc[i + 1]) for i in range(len(doc) - 1)
+                if stemmer.stem(doc[i]) not in self._stopwords]
 
 def buildVocabulary(preprocessedTrainingData):
     all_words = []
@@ -66,7 +85,8 @@ def extract_features(message, wf):
     message_words = set(message)
     features = {}
     for word in wf:
-        features['contains(%s)' % word] = (word in message_words)
+        features["contains "+word] = (word in message_words)
+        # features['contains(%s)' % word] = (word in message_words)
     return features
 
 def pretrainNB():
@@ -143,6 +163,32 @@ def pretrainSVCru():
     with zipfile.ZipFile(f'{path}svc_ru.zip', mode='w',compression=zipfile.ZIP_DEFLATED) as zf:
         zf.write(f'{path}my_ru_svc_classifier.pickle', arcname="my_ru_svc_classifier.pickle")
     os.remove(f'{path}my_ru_svc_classifier.pickle')
+    print("Accuracy:", acc)
+
+def pretrainSVCruBigram():
+    path = 'input/'
+    train_data_file = f'{path}toxic_labeled_comments.csv'
+    trainx = pd.read_csv(train_data_file)
+    train = trainx.values[:2000]
+    ppr = PreProcessSomeRusnya()
+    ppr = ppr.processTextOnBigram(train)
+    wf = buildVocabulary(ppr)
+    tutu = []
+    for i in ppr:
+        tutu.append((extract_features(i[1], wf), "toxic" if i[2] == 1 else "untoxic"))
+    random.shuffle(tutu)
+    train_x = tutu[:1500]
+    SVC_classifier = SklearnClassifier(SVC(kernel='linear',probability=True))
+    SVC_classifier.train(train_x)
+    test_x = tutu[1500:]
+    acc = nltk.classify.accuracy(SVC_classifier, test_x)
+    path = "output/"
+    f = open(f'{path}my_bigram_ru_svc_classifier.pickle', 'wb')
+    pickle.dump(SVC_classifier, f)
+    f.close()
+    with zipfile.ZipFile(f'{path}svc_ru_bigram.zip', mode='w',compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.write(f'{path}my_bigram_ru_svc_classifier.pickle', arcname="my_bigram_ru_svc_classifier.pickle")
+    os.remove(f'{path}my_bigram_ru_svc_classifier.pickle')
     print("Accuracy:", acc)
 
 def classify_with_modelling_NB(message):
@@ -269,7 +315,7 @@ def classify_many_with_modelling_SVCeng(messages):
                        str(1 - r_prob) + " Untoxic\n\r")
     return result
 
-def classify_many_with_modelling_SVCru(messages):
+def classify_many_with_modelling_SVCru(messages, bi=False):
     path = 'input/'
     train_data_file = f'{path}toxic_labeled_comments.csv'
     trainx = pd.read_csv(train_data_file)
@@ -281,8 +327,12 @@ def classify_many_with_modelling_SVCru(messages):
         ppr_messages.append(ppr.processDoc(message))
     wf = buildVocabulary(ppred)
     path = "output/"
-    archive = zipfile.ZipFile(f'{path}svc_ru.zip', 'r')
-    f = archive.open("my_ru_svc_classifier.pickle")
+    if(bi != False):
+        archive = zipfile.ZipFile(f'{path}svc_ru.zip', 'r')
+        f = archive.open("my_ru_svc_classifier.pickle")
+    else:
+        archive = zipfile.ZipFile(f'{path}svc_ru_bigram.zip', 'r')
+        f = archive.open("my_bigram_ru_svc_classifier.pickle")
     model = pickle.load(f)
     result = []
     for k in range(len(messages)):
@@ -332,6 +382,7 @@ if __name__ == '__main__':
     #pretrainNB()
     #pretrainSVCeng() #90% точность почти
     #pretrainSVCru() #кое-как 70% точность, це фигово, но в принципе угадывает
+    #pretrainSVCruBigram() #0.576 отвратительно!
     test = trainx.values[3150:3200]
     messages = []
     for message in test:
@@ -340,7 +391,7 @@ if __name__ == '__main__':
     #    messages.append(message[1])
     # [print(i) for i in classify_many_with_modelling_NB(messages)]
     # [print(i) for i in classify_many_with_modelling_SVCeng(messages)] # для английской версии
-    # [print(i) for i in classify_many_with_modelling_SVCru(messages)] # для русской версии
+    [print(i) for i in classify_many_with_modelling_SVCru(messages, True)] # для русской версии
     #print(messages[0])
     #print(classify_with_modelling_NB(messages[0]))
     #print(classify_with_modelling_SVCeng(messages[0]))
