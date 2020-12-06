@@ -143,7 +143,7 @@ def pretrainSVCru():
     path = 'input/'
     train_data_file = f'{path}toxic_labeled_comments.csv'
     trainx = pd.read_csv(train_data_file)
-    train = trainx.values[:3000]
+    train = trainx.values[:3500]
     ppr = PreProcessSomeRusnya()
     ppr = ppr.processText(train)
     wf = buildVocabulary(ppr)
@@ -151,10 +151,10 @@ def pretrainSVCru():
     for i in ppr:
         tutu.append((extract_features(i[1], wf), "toxic" if i[2] == 1 else "untoxic"))
     random.shuffle(tutu)
-    train_x = tutu[:2400]
+    train_x = tutu[:2750]
     SVC_classifier = SklearnClassifier(SVC(kernel='linear',probability=True))
     SVC_classifier.train(train_x)
-    test_x = tutu[2400:]
+    test_x = tutu[2750:]
     acc = nltk.classify.accuracy(SVC_classifier, test_x)
     path = "output/"
     f = open(f'{path}my_ru_svc_classifier.pickle', 'wb')
@@ -381,7 +381,7 @@ if __name__ == '__main__':
     trainx = pd.read_csv(train_data_file)
     #pretrainNB()
     #pretrainSVCeng() #90% точность почти
-    #pretrainSVCru() #кое-как 70% точность, це фигово, но в принципе угадывает
+    pretrainSVCru() #кое-как 70% точность, це фигово, но в принципе угадывает
     #pretrainSVCruBigram() #0.576 отвратительно!
     test = trainx.values[3150:3200]
     messages = []
