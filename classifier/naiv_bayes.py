@@ -11,18 +11,20 @@ from sklearn.naive_bayes import BernoulliNB
 from nltk.stem.snowball import SnowballStemmer
 import pickle
 from sklearn.metrics import accuracy_score
-from pymystem3 import Mystem
-
+#from pymystem3 import Mystem
+import pymorphy2 as pm
 
 def preprocessing_data(text):
     stop_words = set(stopwords.words('russian') + list(punctuation)) #список стоп-слов
     stemmer = SnowballStemmer("russian")
     # m = Mystem() #для лемматизации
+    morph = pm.MorphAnalyzer()
     text = text.lower() #приведение слов к строчным
     text = re.sub('[^а-яА-Я]', ' ', text, flags=re.MULTILINE)#удаляем знаки пунктуации
     tokens = word_tokenize(text) #разделяем слова на отдельные токены
     text = [word for word in tokens if word not in stop_words] #удаляем стоп-слова
     text = [stemmer.stem(word) for word in text] #производим стемминг
+    #text = [morph.parse(word)[0].normal_form for word in text] #производим лемматизацию
     # text = ' '.join(text)
     # text = m.lemmatize(text)
     text = ' '.join(text)
@@ -47,17 +49,20 @@ def training_data(input_data):
     #разделение на тренировочную и тестовую выборку
     X_train, X_test, y_train, y_test = train_test_split(train_db['comment'], train_db['toxic'], test_size=0.33,
                                                         random_state=42)
+    print("Векторизация")
     #формирование словаря
     count_vect = CountVectorizer()
     X_train_counts = count_vect.fit_transform(X_train)
     X_train_counts.shape
     write_pickle(count_vect, 'count_vect')
 
+    print("Векторизация TF-IDF")
     #формирование TF-IDF
     tfidf_transformer = TfidfTransformer()
     X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
     write_pickle(tfidf_transformer, 'tfidf_transformer')
 
+    print("Обучение Байесовского классификатора")
     #тренировка классификтора
     model = BernoulliNB().fit(X_train_tfidf, y_train)
     write_pickle(model, 'model')
@@ -68,10 +73,12 @@ def training_data(input_data):
     tfidf_transformer2 = read_pickle('tfidf_transformer')
     X_new_tfidf = tfidf_transformer2.transform(X_new_counts)
 
+    print("Оценка точности Байесовского классификатора")
     #оценка точности классификатора
     predicted = model.predict(X_new_tfidf)
     acc = np.mean(predicted == y_test)
     print("Точность: ", acc) #87%
+    #0.8788898233809924 если юзать pymorphy2
 
 
 def classifier(messages):
@@ -87,8 +94,8 @@ def classifier(messages):
 
 
 if __name__ == '__main__':
-    #input_data = 'labeled_ru_ds.csv'
-    # training_data(input_data)
+    input_data = 'labeled_ru_ds.csv'
+    training_data(input_data)
 
     messages = ["Верблюдов-то за что? Дебилы, бл...",
                 "Хохлы, это отдушина затюканого россиянина, мол, вон, а у хохлов еще хуже. Если бы хохлов не было, кисель их бы придумал.",
