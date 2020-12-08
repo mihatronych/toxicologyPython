@@ -43,12 +43,13 @@ def read_pickle(name):
 
 
 def training_data(input_data):
-    train_db = pd.read_csv(input_data) #получение датасета
-    #train_db = train_db[:100]
-    print("Препроцессинг")
-    train_db['comment'] = train_db['comment'].map(preprocessing_data) #подготовка данных к обработке
-    #разделение на тренировочную и тестовую выборку
-    X_train, X_test, y_train, y_test = train_test_split(train_db['comment'], train_db['toxic'], test_size=0.33,
+    train_db = pd.read_csv(input_data)  # получение датасета
+    # train_db = train_db[:100]
+    # print("Препроцессинг")
+    # train_db['comment'] = train_db['comment'].map(preprocessing_data)  # подготовка данных к обработке
+    # разделение на тренировочную и тестовую выборку
+    X_train, X_test, y_train, y_test = train_test_split(train_db['comment'].values.astype('U'), train_db['toxic'],
+                                                        test_size=0.33,
                                                         random_state=42)
     print("Векторизация")
     #формирование словаря
@@ -94,10 +95,17 @@ def classifier(messages):
     predicted = model.predict_proba(X_new_tfidf)
     return zip(messages, predicted)
 
+def save_clear_data(input_data):
+    train_db = pd.read_csv(input_data)
+    train_db['comment'] = train_db['comment'].map(preprocessing_data)
+    columns = ['comment', 'toxic']
+    df = pd.DataFrame(train_db, columns=columns)
+    df.to_csv(r'clear_data.csv', mode='a', header=True, index=False)
 
 if __name__ == '__main__':
-    #input_data = 'labeled_ru_ds.csv'
-    #training_data(input_data)
+    input_data = 'labeled_ru_ds.csv'  # для новой прогонки
+    input_data = 'clear_data.csv'  # лемматизированный датасет
+    training_data(input_data)
 
     messages = ["Верблюдов-то за что? Дебилы, бл...",
                 "Хохлы, это отдушина затюканого россиянина, мол, вон, а у хохлов еще хуже. Если бы хохлов не было, кисель их бы придумал.",

@@ -11,7 +11,6 @@ from sklearn.naive_bayes import BernoulliNB
 from nltk.stem.snowball import SnowballStemmer
 import pickle
 from sklearn.metrics import accuracy_score
-from pymystem3 import Mystem
 import pymorphy2
 
 def preprocessing_data(text):
