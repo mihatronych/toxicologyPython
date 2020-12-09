@@ -78,13 +78,14 @@ def training_data(input_data, n_trees, seed):
     tfidf_transformer2 = read_pickle('tfidf_transformer')
     X_new_tfidf = tfidf_transformer2.transform(X_new_counts)
 
-    kfold = model_selection.KFold(n_splits=1000, random_state=seed, shuffle=True)
-    cart = BernoulliNB()
+    kfold = model_selection.KFold(n_splits=100, random_state=seed, shuffle=True)
+    #cart = BernoulliNB()
+    cart = SVC(kernel='linear',probability=True)
     model = BaggingClassifier(base_estimator=cart, n_estimators=n_trees, random_state=seed).fit(X_train_tfidf, y_train)
     results = model_selection.cross_val_score(model, X_train_tfidf, y_train, cv=kfold)
-    print(results.mean())
-    write_pickle(model, 'modelBernoulliNB_bag')
-    print("Оценка точности BAG классификатора")
+    print(results.mean())  # 0.8891111111111111 BernoulliNB
+    write_pickle(model, 'modelSVC_bag')
+    print("Оценка точности SVC классификатора")
     #оценка точности классификатора
     predicted = model.predict(X_new_tfidf)
     acc = np.mean(predicted == y_test)
@@ -99,7 +100,7 @@ def classifier(messages):
     tfidf_transformer = read_pickle('tfidf_transformer')
     X_new_tfidf = tfidf_transformer.transform(X_new_counts)
 
-    model = read_pickle('modelBernoulliNB_bag')
+    model = read_pickle('modelSVC_bag')
     predicted = model.predict_proba(X_new_tfidf)
     return zip(messages, predicted)
 
@@ -113,7 +114,7 @@ def save_clear_data(input_data):
 if __name__ == '__main__':
     input_data = 'labeled_ru_ds.csv'  # для новой прогонки
     input_data = 'clear_data.csv'  # лемматизированный датасет
-    training_data(input_data, 100, 42)
+    training_data(input_data, 10, 42)
 
     messages = ["Верблюдов-то за что? Дебилы, бл...",
                 "Хохлы, это отдушина затюканого россиянина, мол, вон, а у хохлов еще хуже. Если бы хохлов не было, кисель их бы придумал.",
