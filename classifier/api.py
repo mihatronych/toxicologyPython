@@ -1,8 +1,9 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask import request
 from flask import abort
 import forVK
-import classifier.xgb as xgb
+import classifier
+import classifier.xgb
 
 app = Flask(__name__)
 
@@ -85,14 +86,38 @@ def get_members(id):
         abort(400)
 
 
-@app.route('/toxicity_py/api/message', methods=['POST'])
+@app.route('/toxicity_py/api/message', methods=['POST', 'GET'])
 def get_message():
-    return "Hello!"
+    if request.method == 'POST':
+        data = request.json['messages']
+        labeled_messages = classifier.xgb.classifier([data])
+        result = []
+        for comment, toxic in labeled_messages:
+            result.append({
+                'message': comment,
+                'toxic': str(toxic[1])
+            })
+        print(result)
+        return jsonify(result)
+    else:
+        abort(400)
 
 
-@app.route('/toxicity_py/api/messages', methods=['POST'])
+@app.route('/toxicity_py/api/messages', methods=['POST', 'GET'])
 def get_messages():
-    return xgb.classifier(messages)
+    if request.method == 'POST':
+        data = request.json['messages']
+        labeled_messages = classifier.xgb.classifier(data)
+        result = []
+        for comment, toxic in labeled_messages:
+            result.append({
+                'message': comment,
+                'toxic': str(toxic[1])
+            })
+        print(result)
+        return jsonify(result)
+    else:
+        abort(400)
 
 
 if __name__ == '__main__':

@@ -100,23 +100,13 @@ def classifier(messages):
     predicted = model.predict_proba(X_new_tfidf)
     return zip(messages, predicted)
 
-def classifier_for_one(message):
-    clear_message = map(preprocessing_data, [message])
-    count_vect = read_pickle('count_vect')
-    X_new_counts = count_vect.transform(clear_message)
-    tfidf_transformer = read_pickle('tfidf_transformer')
-    X_new_tfidf = tfidf_transformer.transform(X_new_counts)
-
-    model = read_pickle('modelXGB')
-    predicted = model.predict_proba(X_new_tfidf)
-    return zip(message, predicted)
-
 def save_clear_data(input_data):
     train_db = pd.read_csv(input_data)
     train_db['comment'] = train_db['comment'].map(preprocessing_data)
     columns = ['comment', 'toxic']
     df = pd.DataFrame(train_db, columns=columns)
     df.to_csv(r'clear_data.csv', mode='a', header=True, index=False)
+
 
 if __name__ == '__main__':
     input_data = 'labeled_ru_ds.csv'  # для новой прогонки
