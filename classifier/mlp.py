@@ -12,7 +12,7 @@ from sklearn.neural_network import MLPClassifier
 from nltk.stem.snowball import SnowballStemmer
 import pickle
 import pymorphy2 as pm
-
+from sklearn.model_selection import GridSearchCV
 
 def preprocessing_data(text):
     stop_words = set(stopwords.words('russian') + list(punctuation)) #список стоп-слов
@@ -67,9 +67,17 @@ def training_data(input_data):
     print("Обучение MLP классификатора")
     # тренировка классификтора
     #model = MLPClassifier(solver="sgd", activation="relu", learning_rate_init=0.001, max_iter=500, alpha=1e-5, hidden_layer_sizes=(100,100,100), verbose=10, tol=0.000000001, random_state=21).fit(X_train_tfidf, y_train)
-    model = MLPClassifier(solver="sgd", max_iter=600, alpha=0.0001,
-                          hidden_layer_sizes=(100, 100, 100), verbose=10, tol=0.000000001, random_state=21).fit(
-        X_train_tfidf, y_train)
+    model = MLPClassifier(max_iter=40).fit(X_train_tfidf, y_train) #0.8738435660218671
+    parameter_space = {
+        'hidden_layer_sizes': [(50, 50, 50), (50, 100, 50), (100,)],
+        'activation': ['tanh', 'relu'],
+        'solver': ['sgd', 'adam'],
+        'alpha': [0.0001, 0.05],
+        'learning_rate': ['constant', 'adaptive'],
+    }
+    clf = GridSearchCV(model, parameter_space, n_jobs=-1, cv=3)
+    clf.fit(X_train_tfidf, y_train)
+
     write_pickle(model, 'modelMLP')
 
     # формирование тренировочной выборки
@@ -80,7 +88,7 @@ def training_data(input_data):
 
     print("Оценка точности MLP классификатора")
     # оценка точности классификатора
-    predicted = model.predict(X_new_tfidf)
+    predicted = clf.predict(X_new_tfidf)
     acc = np.mean(predicted == y_test)
     print("Точность: ", acc)  # 0.86565...
     # 0.866484440706476 если юзать pymorphy2
@@ -97,12 +105,14 @@ def classifier(messages):
     predicted = model.predict_proba(X_new_tfidf)
     return zip(messages, predicted)
 
+
 def save_clear_data(input_data):
     train_db = pd.read_csv(input_data)
     train_db['comment'] = train_db['comment'].map(preprocessing_data)
     columns = ['comment', 'toxic']
     df = pd.DataFrame(train_db, columns=columns)
     df.to_csv(r'clear_data.csv', mode='a', header=True, index=False)
+
 
 if __name__ == '__main__':
     input_data = 'labeled_ru_ds.csv' #для новой прогонки

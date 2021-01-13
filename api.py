@@ -2,6 +2,8 @@ from flask import Flask
 from flask import request
 from flask import abort
 import forVK
+import classifier.xgb as xgb
+
 app = Flask(__name__)
 
 
@@ -90,7 +92,7 @@ def get_message():
 
 @app.route('/toxicity_py/api/messages', methods=['POST'])
 def get_messages():
-    return "Hello!"
+    return xgb.classifier(messages)
 
 
 if __name__ == '__main__':
