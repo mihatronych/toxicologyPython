@@ -17,8 +17,42 @@ from gensim.models import Word2Vec
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.manifold import TSNE
+from sklearn.pipeline import Pipeline
+from spacy.lang.ru import Russian
+import spacy
+import csv
+from dostoevsky.tokenization import RegexTokenizer
+from dostoevsky.models import FastTextSocialNetworkModel
+import fasttext
 
 patterns = "[A-Za-z0-9!#$%&'()*+,./:;<=>?@[\]^_`{|}~—\"\-]+"
+fasttext.FastText.eprint = lambda x: None
+tokenizer = RegexTokenizer()
+model = FastTextSocialNetworkModel(tokenizer=tokenizer, lemmatize=True)
+
+def csv_reader(file_obj):
+    """
+    Read a csv file
+    """
+    reader = csv.reader(file_obj)
+    data = []
+    for row in reader:
+        row = str(" ".join(row))
+        row = row.replace("#", "hashtag")
+        if row!="":
+            data.append(row + ";" + "0")
+    data[0] = "comment;toxic;PER;LOC;ORG;positive;negative;neutral;speech;skip;rude"
+    return data
+
+def csv_dict_writer(path, fieldnames, data):
+    """
+    Writes a CSV file using DictWriter
+    """
+    with open(path, "w", newline='', encoding="utf-8") as out_file:
+        writer = csv.DictWriter(out_file, delimiter=';', fieldnames=fieldnames)
+        writer.writeheader()
+        for row in data:
+            writer.writerow(row)
 
 def preprocessing_data(text):
     stop_words = set(stopwords.words('russian') + list(punctuation)) #список стоп-слов
@@ -64,7 +98,7 @@ def word_to_vect(data):
     write_pickle(count_vect, 'count_vect')
     return X_train_counts
 
-def tf_idf(data): # пока не работает
+def tf_idf(data):
     X_train_counts = data
     # формирование TF-IDF
     tfidf_transformer = TfidfTransformer()
@@ -146,21 +180,85 @@ def tsne_scatterplot(model, word, list_names):
     plt.title('t-SNE visualization for {}'.format(word.title()))
     return plt
 
+def some_spicy_features_extraction(input_data, nlp): # version pymorphy 0.9
+    with open(input_data, "r", encoding="utf-8") as f_csv:
+        data = csv_reader(f_csv)
+    loc_data = data[1:len(data)]
+    loc_data = [i.split(";") for i in loc_data]
+    for k in range(len(loc_data)):
+        row = loc_data[k]
+        res = nlp(row[0])
+        for ent in res.ents:
+            if len(ent) != 0:
+                #print(ent.text, ent.start_char, ent.end_char, ent.label_)
+                if ent.label_ == "PER":
+                    row[2] = "1"
+                if ent.label_ == "LOC":
+                    row[3] = "1"
+                if ent.label_ == "ORG":
+                    row[4] = "1"
+        loc_data[k] = row
+        res = model.predict([row[0]], k=5)[0]
+        row[5] = str(res["positive"])
+        row[6] = str(res["negative"])
+        row[7] = str(res["neutral"])
+        row[8] = str(res["speech"])
+        row[9] = str(res["skip"])
+        loc_data[k] = row
+    loc_data = [";".join(i) for i in loc_data]
+    data[1:len(data)] = loc_data
+    data = [row.split(";") for row in data]
+    my_list = []
+    fieldnames = data[0]
+    for values in data[1:]:
+        inner_dict = dict(zip(fieldnames, values))
+        my_list.append(inner_dict)
+    path = "vk_comments_DS2.csv"
+    csv_dict_writer(path, fieldnames, my_list)
+
+
+def rude_feature_extraction(input_data):
+    with open(input_data, "r", encoding="utf-8") as f_csv:
+        data = csv_reader(f_csv)
+    loc_data = data[1:len(data)]
+    loc_data = [i.split(";") for i in loc_data]
+    with open("rude_words.txt", "r", encoding="utf-8") as f_txt:
+        r_w = f_txt.readline()
+    r_w = r_w.replace(" ", "")
+    r_w = r_w.split(",")
+    for k in range(len(loc_data)):
+        row = loc_data[k]
+        lemmy = preprocessing_data(row[0]).split(" ")
+        for lemma in lemmy:
+            if r_w.count(lemma) != 0:
+                loc_data[k][10] = "1"
+    data[1:len(data)] = loc_data
+    my_list = []
+    fieldnames = data[0].split(";")
+    for values in data[1:]:
+        inner_dict = dict(zip(fieldnames, values))
+        my_list.append(inner_dict)
+    path = "vk_comments_DS3.csv"
+    csv_dict_writer(path, fieldnames, my_list)
+
 if __name__ == '__main__':
+    # nlp = spacy.load("ru_core_news_lg")
     messages = ["Верблюдов-то за что? Дебилы, бл...",
                 "Хохлы, это отдушина затюканого россиянина, мол, вон, а у хохлов еще хуже. Если бы хохлов не было, кисель их бы придумал.",
                 "Какой чудесный день!",
                 "ты вообще отстойный, фу таким быть"]
-    input_data = 'vk_comments_DS.csv' #для новой прогонки
-    data = preprocess(input_data)
-    data = data.dropna()
-    print(data)
-    tokens = data["comment"].values.astype('U')
-    x_tr = word_to_vect(data)
-    print(x_tr)
-    tokens = [token.split(" ") for token in tokens]
-    train_word2vec(tokens)
-    w2v_model = read_pickle("w2v_model")
-    print(w2v_model)
-    plt = tsne_scatterplot(w2v_model, "женщина", ["проблема"])
-    plt.show()
+    input_data = 'vk_comments_DS2.csv' #для новой прогонки
+    rude_feature_extraction(input_data)
+    # some_spicy_features_extraction(input_data, nlp) # функция доставания некоторых признаков:именованные,настроение
+    # data = preprocess(input_data)
+    # data = data.dropna()
+    # print(data)
+    # tokens = data["comment"].values.astype('U')
+    # x_tr = word_to_vect(data)
+
+    # tokens = [token.split(" ") for token in tokens]
+    # train_word2vec(tokens)
+    # w2v_model = read_pickle("w2v_model")
+    # print(w2v_model)
+    # plt = tsne_scatterplot(w2v_model, "женщина", ["проблема"])
+    # plt.show()
