@@ -71,7 +71,7 @@ def training_data(input_data):
     #тренировка классификтора
     model = xgb.XGBClassifier(random_state=42, base_score=0.5, booster='dart', colsample_bylevel=1, colsample_bytree=1, gamma=0
                               , learning_rate=0.1, max_delta_step=0, max_depth=20, min_child_weight=1, missing=None,
-                              n_estimators=10000, n_jobs=6, objective='binary:logistic', reg_alpha=0.1, reg_lambda=1,
+                              n_estimators=100, n_jobs=6, objective='binary:logistic', reg_alpha=0.1, reg_lambda=1,
                               scale_pos_weight=1, subsample=1, eval_metric="logloss").fit(X_train_tfidf, y_train, early_stopping_rounds=10, eval_set=[(X_new_tfidf, y_test)])
     write_pickle(model, 'modelXGB')
 
