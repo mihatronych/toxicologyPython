@@ -7,6 +7,7 @@ import nltk
 import numpy as np
 import pandas as pd
 import pymorphy2
+import spacy
 from dostoevsky.models import FastTextSocialNetworkModel
 from dostoevsky.tokenization import RegexTokenizer
 from gensim.models import FastText
@@ -17,6 +18,7 @@ from scipy import sparse
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.svm import SVC
 
 patterns = "[A-Za-z0-9!#$%&'()*+,./:;<=>?@[\]^_`{|}~—\"\-]+"
 fasttext.FastText.eprint = lambda x: None
@@ -138,67 +140,42 @@ def train_fasttext(tokens):
     write_pickle(ft_model, 'ft_model2')
     return ft_model
 
-# потенциально будет определять наличие мата
-def rude_feature_extraction(input_data):  # Переделать, чтобыможно было определить наличие мата в поступившем сообщении
-    with open(input_data, "r", encoding="utf-8") as f_csv:
-        data = csv_reader(f_csv)
-    loc_data = data[1:len(data)]
-    loc_data = [i.split(";") for i in loc_data]
+# определят соотношение матов к количеству текста
+def rude_feature_extraction(comment):
     with open("rude_words.txt", "r", encoding="utf-8") as f_txt:
         r_w = f_txt.readline()
     r_w = r_w.replace(" ", "")
     r_w = r_w.split(",")
-    for k in range(len(loc_data)):
-        row = loc_data[k]
-        lemmy = preprocessing_data(row[0]).split(" ")
-        for lemma in lemmy:
-            if r_w.count(lemma) != 0:
-                loc_data[k][10] = "1"
-    data[1:len(data)] = loc_data
-    my_list = []
-    fieldnames = data[0].split(";")
-    for values in data[1:]:
-        inner_dict = dict(zip(fieldnames, values))
-        my_list.append(inner_dict)
-    path = "vk_comments_DS3.csv"
-    csv_dict_writer(path, fieldnames, my_list)
+    lemmy = preprocessing_data(comment).split(" ")
+    rude_words_counter = 0
+    for lemma in lemmy:
+        if r_w.count(lemma) != 0:
+            rude_words_counter += 1
+    return rude_words_counter / len(lemmy)
 
 # потенциально будет определять эмоциональный окрас
-def some_spicy_features_extraction(input_data, nlp):  # Переделать, чтобы можно было определить наличие мата в поступившем сообщении
-    with open(input_data, "r", encoding="utf-8") as f_csv:
-        data = csv_reader(f_csv)
-    loc_data = data[1:len(data)]
-    loc_data = [i.split(";") for i in loc_data]
-    for k in range(len(loc_data)):
-        row = loc_data[k]
-        res = nlp(row[0])
-        for ent in res.ents:
-            if len(ent) != 0:
-                # print(ent.text, ent.start_char, ent.end_char, ent.label_)
-                if ent.label_ == "PER":
-                    row[2] = "1"
-                if ent.label_ == "LOC":
-                    row[3] = "1"
-                if ent.label_ == "ORG":
-                    row[4] = "1"
-        loc_data[k] = row
-        res = model.predict([row[0]], k=5)[0]
-        row[5] = str(res["positive"])
-        row[6] = str(res["negative"])
-        row[7] = str(res["neutral"])
-        row[8] = str(res["speech"])
-        row[9] = str(res["skip"])
-        loc_data[k] = row
-    loc_data = [";".join(i) for i in loc_data]
-    data[1:len(data)] = loc_data
-    data = [row.split(";") for row in data]
-    my_list = []
-    fieldnames = data[0]
-    for values in data[1:]:
-        inner_dict = dict(zip(fieldnames, values))
-        my_list.append(inner_dict)
-    path = "vk_comments_DS2.csv"
-    csv_dict_writer(path, fieldnames, my_list)
+def some_spicy_features_extraction(comment):
+    nlp = spacy.load("ru_core_news_lg")
+    res = nlp(comment)
+    per_c = "0"
+    loc_c = "0"
+    org_c = "0"
+    for ent in res.ents:
+        if len(ent) != 0:
+            if ent.label_ == "PER":
+                per_c = "1"
+            if ent.label_ == "LOC":
+                loc_c = "1"
+            if ent.label_ == "ORG":
+                org_c = "1"
+    res = model.predict([res], k=5)[0]
+    pos_c = str(res["positive"])
+    neg_c = str(res["negative"])
+    neu_c = str(res["neutral"])
+    sp_c = str(res["speech"])
+    sk_c = str(res["skip"])
+    return per_c, loc_c, org_c, pos_c, neg_c, neu_c, sp_c, sk_c
+
 
 def training_data(input_data):
     train_db = pd.read_csv(input_data)  # получение датасета
