@@ -25,6 +25,7 @@ fasttext.FastText.eprint = lambda x: None
 tokenizer = RegexTokenizer()
 model = FastTextSocialNetworkModel(tokenizer=tokenizer, lemmatize=True)
 
+
 def csv_reader(file_obj):
     """
     Read a csv file
@@ -51,7 +52,10 @@ def csv_dict_writer(path, fieldnames, data):
         for row in data:
             writer.writerow(row)
 
+
 patterns = "[A-Za-z0-9!#$%&'()*+,./:;<=>?@[\]^_`{|}~—\"\-]+"
+
+
 def preprocessing_data(text):
     patterns = "[A-Za-z0-9!#$%&'()*+,./:;<=>?@[\]^_`{|}~—\"\-]+"
     stop_words = set(stopwords.words('russian') + list(punctuation))  # список стоп-слов
@@ -81,6 +85,7 @@ def preprocess(input_data):
     train_db['comment'] = train_db['comment'].map(preprocessing_data)  # подготовка данных к обработке
     return train_db
 
+
 class MeanEmbeddingVectorizer(object):
     def __init__(self, word2vec):
         self.word2vec = word2vec
@@ -102,6 +107,7 @@ class MeanEmbeddingVectorizer(object):
     def fit_transform(self, X, y=None):
         return self.transform(X)
 
+
 class MyTokenizer:
     def __init__(self):
         pass
@@ -121,6 +127,7 @@ class MyTokenizer:
     def fit_transform(self, X, y=None):
         return self.transform(X)
 
+
 def train_word2vec(tokens):
     w2v_model = Word2Vec(min_count=5, window=10, size=150, negative=10,
                          alpha=0.03, min_alpha=0.0007, sample=6e-5, sg=0)
@@ -131,6 +138,7 @@ def train_word2vec(tokens):
     write_pickle(w2v_model, 'w2v_model5')
     return w2v_model
 
+
 def train_fasttext(tokens):
     ft_model = FastText(min_count=10, window=5, size=150, negative=10, alpha=0.03, min_alpha=0.0007, sample=6e-5, sg=0)
     ft_model.build_vocab(tokens)
@@ -139,6 +147,7 @@ def train_fasttext(tokens):
     ft_model.init_sims(replace=True)
     write_pickle(ft_model, 'ft_model2')
     return ft_model
+
 
 # определят соотношение матов к количеству текста
 def rude_feature_extraction(comment):
@@ -153,14 +162,15 @@ def rude_feature_extraction(comment):
             rude_words_counter += 1
     return rude_words_counter / len(lemmy)
 
+
 # потенциально будет определять эмоциональный окрас
 def some_spicy_features_extraction(comment):
-    nlp = spacy.load("ru_core_news_lg")
-    res = nlp(comment)
+    nlp = spacy.load("ru_core_news_md")
+    res1 = nlp(comment)
     per_c = "0"
     loc_c = "0"
     org_c = "0"
-    for ent in res.ents:
+    for ent in res1.ents:
         if len(ent) != 0:
             if ent.label_ == "PER":
                 per_c = "1"
@@ -168,7 +178,7 @@ def some_spicy_features_extraction(comment):
                 loc_c = "1"
             if ent.label_ == "ORG":
                 org_c = "1"
-    res = model.predict([res], k=5)[0]
+    res = model.predict([comment], k=5)[0]
     pos_c = str(res["positive"])
     neg_c = str(res["negative"])
     neu_c = str(res["neutral"])
@@ -204,28 +214,28 @@ def training_data(input_data):
     X_train_counts = sparse.csr_matrix(X_train_counts)
 
     print("Обучение SVC классификатора")
-    #тренировка классификтора
-    #model = SVC(kernel='linear', probability=True, C=0.1).fit(X_train_counts, y_train)
-    #write_pickle(model, 'modelSVCw2v')
+    # тренировка классификтора
+    # model = SVC(kernel='linear', probability=True, C=0.1).fit(X_train_counts, y_train)
+    # write_pickle(model, 'modelSVCw2v')
     model = read_pickle('modelSVCw2v')
 
-
-    #формирование тренировочной выборки
+    # формирование тренировочной выборки
     X_test_counts = mev.fit_transform(X_test)
     X_test_counts.shape[0]
     scaler = MinMaxScaler(feature_range=(0, 100))
-    scaler.fit( X_test_counts)
+    scaler.fit(X_test_counts)
     X_test_counts = scaler.transform(X_test_counts)
     X_test_counts = sparse.csr_matrix(X_test_counts)
 
     print("Оценка точности SVC классификатора")
-    #оценка точности классификатора
+    # оценка точности классификатора
     predicted = model.predict(X_test_counts)
     acc = np.mean(predicted == y_test)
     print("Точность: ", acc)
 
     report = classification_report(y_test, model.predict(X_test_counts), target_names=['untoxic', 'toxic'])
     print(report)
+
 
 def classifier(messages):
     clear_message = map(preprocessing_data, messages)
@@ -242,19 +252,21 @@ def classifier(messages):
     predicted = model.predict_proba(X_train_counts)
     return zip(messages, predicted)
 
+
 if __name__ == '__main__':
     messages = ["Верблюдов-то за что? Дебилы, бл...",
                 "Хохлы, это отдушина затюканого россиянина, мол, вон, а у хохлов еще хуже. Если бы хохлов не было, кисель их бы придумал.",
                 "Какой чудесный день!",
                 "ты вообще отстойный, фу таким быть"]
     input_data = 'labeled_ru_ds.csv'  # для новой прогонки
-    training_data(input_data)
+    # training_data(input_data)
+    res = some_spicy_features_extraction(messages[0])
+    print(res)
+   # labeled_messages = classifier(messages)
 
-    labeled_messages = classifier(messages)
-
-    counter = 0
-    for comment, toxic in labeled_messages:
-        print('%r => %s' % (comment, toxic))
-        if (counter == 10):
-            break
-        counter += 1
+    # counter = 0
+    # for comment, toxic in labeled_messages:
+    #     print('%r => %s' % (comment, toxic))
+    #     if (counter == 10):
+    #         break
+    #     counter += 1
