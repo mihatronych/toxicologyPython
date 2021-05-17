@@ -1,4 +1,5 @@
 import csv
+import os
 import pickle
 import re
 from string import punctuation
@@ -75,7 +76,8 @@ def write_pickle(file, name):
 
 
 def read_pickle(name):
-    with open(name + '.pkl', 'rb') as f:
+    print(os.path.dirname(os.path.abspath(__file__)))
+    with open(os.path.dirname(os.path.abspath(__file__)) + '\\' + name + '.pkl', 'rb') as f:
         return pickle.load(f)
 
 
@@ -257,13 +259,14 @@ if __name__ == '__main__':
     messages = ["Верблюдов-то за что? Дебилы, бл...",
                 "Хохлы, это отдушина затюканого россиянина, мол, вон, а у хохлов еще хуже. Если бы хохлов не было, кисель их бы придумал.",
                 "Какой чудесный день!",
-                "ты вообще отстойный, фу таким быть"]
+                "ты вообще отстойный, фу таким быть",
+                "Световые столбы в 2 ночи..."]
     input_data = 'labeled_ru_ds.csv'  # для новой прогонки
     # training_data(input_data)
     res = some_spicy_features_extraction(messages[0])
     print(res)
-   # labeled_messages = classifier(messages)
-
+    labeled_messages = classifier(messages)
+    print(list(labeled_messages))
     # counter = 0
     # for comment, toxic in labeled_messages:
     #     print('%r => %s' % (comment, toxic))

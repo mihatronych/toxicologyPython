@@ -5,7 +5,7 @@
       <sourceFolder url="file://$MODULE_DIR$/vk_parser" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/classifier" isTestSource="false" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.7 (daana)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.9 (venv)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

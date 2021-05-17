@@ -35,7 +35,7 @@ def write_pickle(file, name):
 
 
 def read_pickle(name):
-    with open(name+'.pkl', 'rb') as f:
+    with open(r'C:\Users\theme\PycharmProjects\toxicologyPython\classifier\count_vect.pkl', 'rb') as f:
         return pickle.load(f)
 
 

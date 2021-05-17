@@ -1,151 +1,83 @@
 from flask import Flask, jsonify
 from flask import request
 from flask import abort
+from flask_restful import Api, Resource
 import forVK
 import classifier
-import classifier.xgb
-import vect_svc
+import classifier.vect_svc
 
 app = Flask(__name__)
+api = Api(app)
 
 
-@app.route('/toxicity_py/api/users/<string:id>', methods=['GET'])
-def get_users(id):
-    try:
-        users = forVK.get_user(id)
-        return {'users': users}
-    except:
-        abort(400)
+def analyse_texts(texts_list):
+    labeled_messages = classifier.vect_svc.classifier(texts_list)
+    result = []
+    for comment, toxic in labeled_messages:
+        result.append(str(toxic[0]))
+    return result
 
 
-@app.route('/toxicity_py/api/posts/<string:id>', methods=['GET'])
-def get_posts(id):
-    try:
-        posts = forVK.get_posts(id)
-        return {'posts': posts}
-    except:
-        abort(400)
+def set_post_toxicity(posts):
+    clear_posts = [post for post in posts if post['text'] != '']
+    if len(clear_posts) > 0:
+        marked_posts_texts = analyse_texts([post['text'] for post in clear_posts])
+        for index, post in enumerate(clear_posts):
+            clear_posts[index]['toxicity_mark'] = marked_posts_texts[index]
+    return clear_posts
 
 
-@app.route('/toxicity_py/api/comments/<string:user_id>/<string:post_id>', methods=['GET'])
-def get_comments(user_id, post_id):
-    try:
-        comments = forVK.get_posts_comment(user_id, post_id)
-        return {'comments': comments}
-    except:
-        abort(400)
+class User(Resource):
+    def get(self, user_id):
+        try:
+            user = forVK.get_user(user_id)[0]
+            user_posts = forVK.get_posts(user['id'])['items']
+            marked_posts_texts = set_post_toxicity(user_posts)
+            toxicity_count = 0
+            if len(marked_posts_texts) > 0:
+                toxicity_count = sum(float(item['toxicity_mark']) for item in marked_posts_texts) / len(
+                    marked_posts_texts)
+            else:
+                marked_posts_texts = None
+            user['toxicity'] = toxicity_count
+            # user['is_closed'] = 1 if user['is_closed'] else 0
+
+            return {'user': user, 'posts': marked_posts_texts}
+        except:
+            abort(500, 'Something go wrong')
 
 
-# post 411
-
-@app.route('/toxicity_py/api/answers/<string:user_id>/<string:post_id>/<string:comments_id>', methods=['GET'])
-def get_answers(user_id, post_id, comments_id):
-    try:
-        answers = forVK.get_comment_comments(user_id, post_id, comments_id)
-        return {'answers': answers}
-    except:
-        abort(400)
-
-
-@app.route('/toxicity_py/api/followers/<string:id>', methods=['GET'])
-def get_followers(id):
-    try:
-        followers = forVK.get_users_followers(id)
-        return {'followers': followers}
-    except:
-        abort(400)
+class Group(Resource):
+    def get(self, group_id):
+        try:
+            group = forVK.get_group(group_id)[0]
+            group_posts = forVK.get_posts(group_id)['items']
+            marked_posts_texts = set_post_toxicity(group_posts)
+            toxicity_count = 0
+            if len(marked_posts_texts) > 0:
+                toxicity_count = sum(float(item['toxicity_mark']) for item in marked_posts_texts) / \
+                                 len(marked_posts_texts)
+            group['toxicity'] = toxicity_count
+            return {'group': group, 'posts': marked_posts_texts}
+        except:
+            abort(500, 'Something go wrong')
 
 
-@app.route('/toxicity_py/api/subscriptions/<string:id>', methods=['GET'])
-def get_subscriptions(id):
-    try:
-        subscriptions = forVK.get_users_subscriptions(id)
-        return {'subscriptions': subscriptions}
-    except:
-        abort(400)
+class Post(Resource):
+    def get(self, post_id):
+        try:
+            post = forVK.get_post('-'+post_id.replace('-', '_'))[0]
+            print(post)
+            marked_post = set_post_toxicity([post])
+            owner = forVK.get_group(str(post['owner_id']).replace('-', ''))[0]
+            return {'post': marked_post, 'owner': owner}
+        except:
+            abort(500, 'Something go wrong')
 
 
-@app.route('/toxicity_py/api/groups/<string:id>', methods=['GET'])
-def get_groups(id):
-    try:
-        groups = forVK.get_group(id)
-        return {'groups': groups}
-    except:
-        abort(400)
-
-
-@app.route('/toxicity_py/api/members/<string:id>', methods=['GET'])
-def get_members(id):
-    try:
-        members = forVK.get_groups_members(id)
-        return {'members': members}
-    except:
-        abort(400)
-
-
-@app.route('/toxicity_py/api/message', methods=['POST', 'GET'])
-def get_message():
-    if request.method == 'POST':
-        data = request.json['messages']
-        labeled_messages = classifier.xgb.classifier([data])
-        result = []
-        for comment, toxic in labeled_messages:
-            result.append({
-                'message': comment,
-                'toxic': str(toxic[1])
-            })
-        print(result)
-        return jsonify(result)
-    else:
-        abort(400)
-
-
-@app.route('/toxicity_py/api/messages', methods=['POST', 'GET'])
-def get_messages():
-    if request.method == 'POST':
-        data = request.json['messages']
-        labeled_messages = classifier.xgb.classifier(data)
-        result = []
-        for comment, toxic in labeled_messages:
-            result.append({
-                'message': comment,
-                'toxic': str(toxic[1])
-            })
-        print(result)
-        return jsonify(result)
-    else:
-        abort(400)
-
-
-@app.route('/toxicity_py/api/rude_feature_extraction', methods=['POST', 'GET'])
-def get_rude_feature_extraction():
-    if request.method == 'POST':
-        comment = request.json['comment']
-        prop_neg_to_text = vect_svc.rude_feature_extraction(comment)
-        return jsonify(prop_neg_to_text)
-    else:
-        abort(400)
-
-
-@app.route('/toxicity_py/api/some_spicy_features_extraction', methods=['POST', 'GET'])
-def get_some_spicy_features_extraction():
-    if request.method == 'POST':
-        comment = request.json['comment']
-        per_c, loc_c, org_c, pos_c, neg_c, neu_c, sp_c, sk_c = vect_svc.some_spicy_features_extraction(comment)
-        #neg_c, neu_c, sp_c, sk_c
-        return {
-            'per_c': per_c,
-            'loc_c': loc_c,
-            'org_c': org_c,
-            'pos_c': pos_c,
-            'neg_c': neg_c,
-            'neu_c': neg_c,
-            'sp_c': sp_c,
-            'sk_c': sk_c
-        }
-    else:
-        abort(400)
-
+api.add_resource(User, "/api/user/<string:user_id>")
+api.add_resource(Group, "/api/group/<string:group_id>")
+api.add_resource(Post, "/api/post/<string:post_id>")
 
 if __name__ == '__main__':
     app.run(debug=True)
