@@ -77,7 +77,7 @@ def write_pickle(file, name):
 
 def read_pickle(name):
     print(os.path.dirname(os.path.abspath(__file__)))
-    with open(os.path.dirname(os.path.abspath(__file__)) + '\\' + name + '.pkl', 'rb') as f:
+    with open(os.path.dirname(os.path.abspath(__file__)) + '/' + name + '.pkl', 'rb') as f:
         return pickle.load(f)
 
 
